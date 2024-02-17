@@ -1,9 +1,44 @@
 from guizero import TextBox, App, Text, PushButton, Box
-# the great wall of function
-def tutorialpudding():
-    pass
+from tkinter import Tk, Frame, Label, Button, X, Y, BOTH
+import ttkbootstrap as ttk
+import math
+import pyaudio
+
+w = Tk()
+w.title("pudim-de-bacalhau")
+w.geometry("600x600")
+PyAudio = pyaudio.PyAudio
+BITRATE = 128000
 alphabet = "abcdefghijklmnopqrstuvwxyz"
 whitekeys = {"c":0,"d":2,"e":4,"f":5,"g":7,"a":9,"b":11}
+
+# the great wall of functions
+def playnote(note: str, length: int, channel: int, volume: int, volumesweep: int):
+    frequency = makefreq12tet(tonotefromc0(note.lower()))
+
+    frames = int(BITRATE * length)
+    v = volume
+    trailframes = frames % BITRATE
+    dt = ''    
+
+    if channel == 3:
+        for x in range(frames): # Wave
+            dt = dt+chr(int(math.sin(x/((BITRATE/frequency)/math.pi/3))*v+v+1))
+            v = volume - x/frames*volumesweep
+    for x in range(trailframes): 
+            dt = dt+chr(128)
+
+    p = PyAudio()
+    stream = p.open(format = p.get_format_from_width(1), channels = 1, rate = BITRATE, output = True)
+
+    stream.write(dt)
+    stream.stop_stream()
+    stream.close()
+    p.terminate()
+
+def tutorialpudding():
+    pass
+
 def tonotefromc0(notename: str):
     base = whitekeys[notename[0]]
     acc = 0
@@ -18,14 +53,22 @@ def makefreq12tet(notefromc0: int):
     change = notefromc0-57
     a4 = 440
     return a4 * twelfthRootOf2**change
-# UI is not so hell in guizero, I say that because I don't know how to use tkinter. oops
-o = App("pudim-de-bacalhau", width=800, height=600)
-l = Box(o, align="left", width="fill", height="fill")
-r = Box(o, align="right", width="fill", height="fill")
-welcometext = Text(l, "welcome to pudim-de-bacalhau", color="#000000", size=18)
-tutorial = PushButton(o, text="Tutorial", command=tutorialpudding)
-addnote = 
+# The UI
+o = Frame(w)
+l = Frame(w)
+r = Frame(w)
 
+welcometext = Label(o, text="welcome to pudim-de-bacalhau", font="Helvetica 18")
+inputencouragementtext = Label(l, text="Input some notes!", font="Helvetica 18")
+tutorial = Button(r, text="Tutorial", command=tutorialpudding)
+inputencouragementtext.pack()
+welcometext.pack()
+tutorial.pack()
 
+o.pack(side="top", fill=X)
+l.pack(side="left", fill=BOTH, expand=1)
+r.pack(side="left", fill=BOTH, expand=1)
 
-o.display()
+playnote("A4", 1, 3, 127, 0)
+
+w.mainloop()
