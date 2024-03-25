@@ -3,33 +3,34 @@ from tkinter import Tk, Frame, Label, Button, X, Y, BOTH
 import ttkbootstrap as ttk
 import math
 import pyaudio
+from makesample import WAVE4000
 
 w = Tk()
 w.title("pudim-de-bacalhau")
 w.geometry("600x600")
 PyAudio = pyaudio.PyAudio
-BITRATE = 128000
+BITRATE = 64000
 alphabet = "abcdefghijklmnopqrstuvwxyz"
 whitekeys = {"c":0,"d":2,"e":4,"f":5,"g":7,"a":9,"b":11}
 
 # the great wall of functions
-def playnote(note: str, length: int, channel: int, volume: int, volumesweep: int):
+def playnote(note: str, length: int, channel: int, volume: int):
     frequency = makefreq12tet(tonotefromc0(note.lower()))
 
     frames = int(BITRATE * length)
-    v = volume
     trailframes = frames % BITRATE
-    dt = ''    
+    sinchange = 4000/BITRATE
+    dt = b''
 
     if channel == 3:
         for x in range(frames): # Wave
-            dt = dt+chr(int(math.sin(x/((BITRATE/frequency)/math.pi/3))*v+v+1))
-            v = volume - x/frames*volumesweep
-    for x in range(trailframes): 
-            dt = dt+chr(128)
+            a=int(WAVE4000[int((x*frequency*sinchange)%4000)]*volume/32767)
+            dt+=bytes([a%256,a//256])
+    for x in range(trailframes):
+            dt+=bytes([255, 255])
 
     p = PyAudio()
-    stream = p.open(format = p.get_format_from_width(1), channels = 1, rate = BITRATE, output = True)
+    stream = p.open(format = p.get_format_from_width(2), channels = 1, rate = BITRATE, output = True)
 
     stream.write(dt)
     stream.stop_stream()
@@ -60,15 +61,15 @@ r = Frame(w)
 
 welcometext = Label(o, text="welcome to pudim-de-bacalhau", font="Helvetica 18")
 inputencouragementtext = Label(l, text="Input some notes!", font="Helvetica 18")
-tutorial = Button(r, text="Tutorial", command=tutorialpudding)
+tutorial = Button(r, text="Tutorial", command=tutorialpudding, pady=8)
 inputencouragementtext.pack()
 welcometext.pack()
-tutorial.pack()
+tutorial.pack(fill=X)
 
-o.pack(side="top", fill=X)
-l.pack(side="left", fill=BOTH, expand=1)
-r.pack(side="left", fill=BOTH, expand=1)
+o.pack(pady=5, padx=5, side="top", fill=X)
+l.pack(padx=5, side="left", fill=BOTH, expand=1)
+r.pack(padx=5, side="left", fill=BOTH, expand=1)
 
-playnote("A4", 1, 3, 127, 0)
+playnote("A4", 1, 3, 8000)
 
 w.mainloop()
