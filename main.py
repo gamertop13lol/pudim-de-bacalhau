@@ -9,33 +9,29 @@ w = Tk()
 w.title("pudim-de-bacalhau")
 w.geometry("600x600")
 PyAudio = pyaudio.PyAudio
-BITRATE = 64000
+SAMPLERATE = 44800
 alphabet = "abcdefghijklmnopqrstuvwxyz"
 whitekeys = {"c":0,"d":2,"e":4,"f":5,"g":7,"a":9,"b":11}
+p = PyAudio()
+stream = p.open(format = p.get_format_from_width(2), channels = 1, rate = SAMPLERATE, output = True)
 
 # the great wall of functions
 def playnote(note: str, length: int, channel: int, volume: int):
     frequency = makefreq12tet(tonotefromc0(note.lower()))
 
-    frames = int(BITRATE * length)
-    trailframes = frames % BITRATE
-    sinchange = 4000/BITRATE
+    frames = int(SAMPLERATE * length)
+    trailframes = frames % SAMPLERATE
+    sinchange = 4000/SAMPLERATE
     dt = b''
 
     if channel == 3:
         for x in range(frames): # Wave
-            a=int(WAVE4000[int((x*frequency*sinchange)%4000)]*volume/32767)
+            a=int(WAVE4000[int((x*frequency*sinchange)%4000)]*volume/64)
             dt+=bytes([a%256,a//256])
     for x in range(trailframes):
-            dt+=bytes([255, 255])
-
-    p = PyAudio()
-    stream = p.open(format = p.get_format_from_width(2), channels = 1, rate = BITRATE, output = True)
+            dt+=bytes([0, 0])
 
     stream.write(dt)
-    stream.stop_stream()
-    stream.close()
-    p.terminate()
 
 def tutorialpudding():
     pass
@@ -70,6 +66,11 @@ o.pack(pady=5, padx=5, side="top", fill=X)
 l.pack(padx=5, side="left", fill=BOTH, expand=1)
 r.pack(padx=5, side="left", fill=BOTH, expand=1)
 
-playnote("A4", 1, 3, 8000)
+playnote("Bb3", 0.25, 3, 16)
+playnote("D4", 0.25, 3, 16)
+playnote("F4", 0.25, 3, 16)
+stream.stop_stream()
+stream.close()
+p.terminate()
 
 w.mainloop()
